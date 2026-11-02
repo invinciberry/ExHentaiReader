@@ -113,7 +113,12 @@ class GalleryInformation {
         const title = !!document.getElementById("gn") ? document.getElementById("gn").innerText : "";
         const cover = !!document.getElementById("gd1") ? document.getElementById("gd1").innerHTML.match(/url\((.*)\)/i)[1] : "";
         const infoDOMS = !!document.getElementById("gdd") ? document.getElementById("gdd").getElementsByTagName("tr") : [];
-        const imgPerPage = document.getElementsByClassName("gpc")[0] && document.getElementsByClassName("gpc")[0].innerText.match(/(\d*?) - (\d*?) of/) ? Number(document.getElementsByClassName("gpc")[0].innerText.match(/(\d*?) - (\d*?) of/)[2]) : document.querySelectorAll("#gdt > a").length || document.getElementsByClassName("reader-img").length;
+        // The reader may be started from any thumbnail page, e.g. ?p=6
+        const currentPage = Number(new URLSearchParams(window.location.search).get("p")) || 0;
+        const gpc = document.getElementsByClassName("gpc")[0];
+        const range = gpc && gpc.innerText.replace(/,/g, "").match(/(\d+) - (\d+) of/);
+        // "Showing 121 - 140 of 218" on page p: the first number is p * perPage + 1
+        const imgPerPage = range ? (currentPage > 0 ? (Number(range[1]) - 1) / currentPage : Number(range[2])) : document.querySelectorAll("#gdt > a").length || document.getElementsByClassName("reader-img").length;
         const galleryUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         const metaInfo = {};
         for (let meta of infoDOMS) {
@@ -133,7 +138,8 @@ class GalleryInformation {
         this.pageNum = pages;
         this.url = galleryUrl;
         this.imgPerPage = imgPerPage;
-        this.imageNum = Number(metaInfo["length"].match(/\d*/)[0]);
+        this.currentPage = currentPage;
+        this.imageNum = Number(metaInfo["length"].replace(/,/g, "").match(/\d*/)[0]);
         print("GalleryInformation:", this)
     }
 
@@ -339,7 +345,8 @@ class ImageParser {
         this.imageNum = imageNum;
         this.imgPerPage = information.imgPerPage;
         this.galleryPages = galleryPages;
-        this.galleryPages[0].getImagePageFromDOM(document.body)
+        // The thumbnails already on screen belong to the page the reader was started from
+        this.galleryPages[information.currentPage].getImagePageFromDOM(document.body)
     }
 }
 
