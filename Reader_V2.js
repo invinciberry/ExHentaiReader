@@ -309,7 +309,11 @@ class GalleryPage {
             }
             this.isLoaded = true;
             this.callState = 2;
-            this.clearCallStack()
+            this.clearCallStack();
+            // After an earlier failure, one successful reload brings back the whole page
+            for (const image of this.images) {
+                image.imageWidget && image.imageWidget.button && image.imageWidget.button.click()
+            }
         }, "html", true, function () {
             // Let the waiting images offer a reload, which fetches this gallery page again
             this.callState = 0;
