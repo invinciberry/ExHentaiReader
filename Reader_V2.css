@@ -172,14 +172,14 @@ td > .tag {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    font-size: 70pt;
+    font-size: 40pt;
 }
 .image-container i{
     position: absolute;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    font-size: 70pt;
+    font-size: 40pt;
 }
 
 .reader-menu {
@@ -195,12 +195,12 @@ td > .tag {
 }
 
 #top-menu {
-    height: 150px;
+    height: 90px;
     top: 0px;
 }
 
 #bottom-menu {
-    height: 150px;
+    height: 90px;
     bottom: 0px;
     display: flex;
     flex-flow: row;
@@ -218,7 +218,7 @@ td > .tag {
 }
 
 .reader-menu .iconfont {
-    font-size: 70px;
+    font-size: 42px;
 }
 .reader-menu-config{
     width: 100%;
@@ -250,7 +250,7 @@ td > .tag {
 .reader-menu-config-title{
     width: 50%;
     max-width: 50%;
-    padding: 40px;
+    padding: 20px;
     user-select: none;
     -webkit-user-select: none;
 }

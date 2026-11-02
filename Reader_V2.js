@@ -69,7 +69,7 @@ class GalleryInformation {
         const title = !!document.getElementById("gn") ? document.getElementById("gn").innerText : "";
         const cover = !!document.getElementById("gd1") ? document.getElementById("gd1").innerHTML.match(/url\((.*)\)/i)[1] : "";
         const infoDOMS = !!document.getElementById("gdd") ? document.getElementById("gdd").getElementsByTagName("tr") : [];
-        const imgPerPage = document.getElementsByClassName("gpc")[0] && document.getElementsByClassName("gpc")[0].innerText.match(/(\d*?) - (\d*?) of/) ? Number(document.getElementsByClassName("gpc")[0].innerText.match(/(\d*?) - (\d*?) of/)[2]) : document.getElementsByClassName("gdtm").length || document.getElementsByClassName("reader-img").length;
+        const imgPerPage = document.getElementsByClassName("gpc")[0] && document.getElementsByClassName("gpc")[0].innerText.match(/(\d*?) - (\d*?) of/) ? Number(document.getElementsByClassName("gpc")[0].innerText.match(/(\d*?) - (\d*?) of/)[2]) : document.querySelectorAll("#gdt > a").length || document.getElementsByClassName("reader-img").length;
         const galleryUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         const metaInfo = {};
         for (let meta of infoDOMS) {
@@ -208,11 +208,11 @@ class GalleryPage {
     }
 
     getImagePageFromDOM(dom) {
-        const imageWidgets = dom.getElementsByClassName("gdtm");
+        const imageWidgets = dom.querySelectorAll("#gdt > a");
         for (let i = 0; i < imageWidgets.length; i++) {
             const imageWidget = imageWidgets[i];
-            const pageUrl = imageWidget.getElementsByTagName("a")[0].href;
-            const img = imageWidget.getElementsByTagName("img")[0];
+            const pageUrl = imageWidget.href;
+            const img = imageWidget.firstElementChild;
             const height = Number(img.style.height.match(/\d*/)) || 139;
             const width = Number(img.style.width.match(/\d*/)) || 100;
             this.images[i].imagePageUrl = pageUrl;
@@ -245,11 +245,11 @@ class GalleryPage {
         this.callStack.push(imageWidget);
         const url = this.url;
         GET.call(this, url, function (d) {
-            const imageWidgets = d.getElementsByClassName("gdtm");
+            const imageWidgets = d.querySelectorAll("#gdt > a");
             for (let i = 0; i < imageWidgets.length; i++) {
                 const imageWidget = imageWidgets[i];
-                const pageUrl = imageWidget.getElementsByTagName("a")[0].href;
-                const img = imageWidget.getElementsByTagName("img")[0];
+                const pageUrl = imageWidget.href;
+                const img = imageWidget.firstElementChild;
                 const height = Number(img.style.height.match(/\d*/)) || 139;
                 const width = Number(img.style.width.match(/\d*/)) || 100;
                 this.images[i].imagePageUrl = pageUrl;
