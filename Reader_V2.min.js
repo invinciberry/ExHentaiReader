@@ -524,7 +524,9 @@ class ImageWidget {
 
     reloadImage() {
         if (this.state >= 5) {
-            this.imgInfo.imagePageUrl += "?nl=" + this.imgInfo.nl;
+            // Same as the site's nl(): chain keys so every failed server is skipped
+            const separator = this.imgInfo.imagePageUrl.indexOf("?") > -1 ? "&" : "?";
+            this.imgInfo.imagePageUrl += separator + "nl=" + this.imgInfo.nl;
             this.imgInfo.url = "";
             this.imgInfo.nl = ""
         }
