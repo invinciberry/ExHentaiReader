@@ -437,7 +437,11 @@ class ImageWidget {
             }
             print(`Image load fail ${this.index}`);
             const button = this.addReloadButton();
-            button.click();
+            // Try a few other servers automatically, then leave it to the reload button
+            this.autoReloads = (this.autoReloads || 0) + 1;
+            if (button && this.autoReloads <= 3) {
+                button.click()
+            }
         };
         img.onload = () => {
             if (this.img.src.indexOf(this.blankImageUrl) < 0) {
