@@ -11,6 +11,27 @@ function getOffsetTopByBody(el) {
     return offsetTop
 }
 
+// Keyboard and browser toolbars shrink the visible area but not the layout viewport,
+// so bottom:0 panels end up hidden behind them. Track the gap in --vv-bottom.
+function trackVisualViewport() {
+    const vv = window.visualViewport;
+    if (!vv) {
+        return
+    }
+    const update = () => {
+        const gap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+        document.documentElement.style.setProperty("--vv-bottom", `${gap}px`)
+    };
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    update()
+}
+
+function isTyping() {
+    const el = document.activeElement;
+    return !!el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)
+}
+
 function scrollBack(ele, backPix) {
     if (ele.scrollHeight - ele.scrollTop === ele.clientHeight) {
         ele.scrollTop -= backPix
@@ -940,6 +961,10 @@ class WebStructure {
         this._bottomMenu = bottomMenu;
         document.body.appendChild(bottomMenu);
         document.body.onscroll = e => {
+            // iOS scrolls the page to reveal a focused field; don't close the panel holding it
+            if (isTyping()) {
+                return
+            }
             if (this.isShowMenu) {
                 this.hideMenu()
             }
@@ -1353,6 +1378,7 @@ if (!isLoadOrigin) {
         webStructure.loadStyleFile();
         webStructure.rebuildMobileStructure(config, galleryInformation);
         webStructure.initMenuStructure(configProxy);
+        trackVisualViewport();
         var imageParser = new ImageParser(galleryInformation);
         webStructure.initImageStructure(imageParser);
         var actionListener = new ActionListener(config, webStructure);
