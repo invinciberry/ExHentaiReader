@@ -19,7 +19,10 @@ function trackVisualViewport() {
         return
     }
     const update = () => {
-        const gap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+        const layout = document.documentElement;
+        // Pinch zoom also shrinks the visible area; only react when the full width is visible
+        const isZoomed = vv.width < layout.clientWidth * 0.95;
+        const gap = isZoomed ? 0 : Math.max(0, layout.clientHeight - vv.height - vv.offsetTop);
         document.documentElement.style.setProperty("--vv-bottom", `${gap}px`)
     };
     vv.addEventListener("resize", update);
@@ -38,7 +41,7 @@ function scrollBack(ele, backPix) {
     }
 }
 
-function GET(url, fn, type, async = true) {
+function GET(url, fn, type, async = true, onFail = null, tries = 3) {
     print("GET: " + url);
     if (type == "jsonp") {
         var script = document.createElement("script");
@@ -52,6 +55,20 @@ function GET(url, fn, type, async = true) {
     } else {
         var xhr = new XMLHttpRequest;
         xhr.open("GET", url, async);
+        // Retry errors and unparseable pages (e.g. rate limiting), then let the caller recover
+        const fail = reason => {
+            print(`GET failed (${reason}): ${url}`);
+            if (tries > 1) {
+                setTimeout(() => GET.call(this, url, fn, type, async, onFail, tries - 1), 2e3)
+            } else if (onFail) {
+                onFail.call(this)
+            }
+        };
+        xhr.onerror = () => fail("network");
+        xhr.ontimeout = () => fail("timeout");
+        if (async) {
+            xhr.timeout = 15e3
+        }
         xhr.onload = () => {
             if (xhr.status === 200) {
                 let responseText = xhr.responseText;
@@ -67,7 +84,13 @@ function GET(url, fn, type, async = true) {
                 if (type == "text") {
                     parm = responseText
                 }
-                fn.call(this, parm)
+                try {
+                    fn.call(this, parm)
+                } catch (e) {
+                    fail(e.message)
+                }
+            } else {
+                fail(xhr.status)
             }
         };
         xhr.send()
@@ -201,7 +224,11 @@ class ImageMeta {
             this.url = imgUrl;
             this.nl = nl;
             this.imageWidget.updateImageDOM()
-        }, "text")
+        }, "text", true, function () {
+            this.state = 2;
+            this.imageWidget.loadingBoxHiden();
+            this.imageWidget.addReloadButton()
+        })
     }
 
     get isLoaded() {
@@ -267,6 +294,9 @@ class GalleryPage {
         const url = this.url;
         GET.call(this, url, function (d) {
             const imageWidgets = d.querySelectorAll("#gdt > a");
+            if (imageWidgets.length === 0) {
+                throw new Error("no thumbnails on gallery page")
+            }
             for (let i = 0; i < imageWidgets.length; i++) {
                 const imageWidget = imageWidgets[i];
                 const pageUrl = imageWidget.href;
@@ -278,8 +308,18 @@ class GalleryPage {
                 this.images[i].width = width
             }
             this.isLoaded = true;
+            this.callState = 2;
             this.clearCallStack()
-        }, "html")
+        }, "html", true, function () {
+            // Let the waiting images offer a reload, which fetches this gallery page again
+            this.callState = 0;
+            while (this.callStack.length > 0) {
+                const imageWidget = this.callStack.shift();
+                imageWidget.state = 0;
+                imageWidget.loadingBoxHiden();
+                imageWidget.addReloadButton()
+            }
+        })
     }
 }
 
