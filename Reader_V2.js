@@ -525,6 +525,7 @@ class ImageWidget {
             this.imgInfo.nl = ""
         }
         print(`Reloading Image: ${this.index} state: ${this.state}`);
+        this.webStructure.addLoading(this.index);
         this.imgInfo.loadIntoWidget()
     }
 
@@ -532,6 +533,8 @@ class ImageWidget {
         if (this.button || this.state == -1) {
             return this.button
         }
+        // A stalled image must not hold a loading slot, or loading stops behind it
+        this.webStructure.removeLoading(this.index);
         const button = document.createElement("div");
         this.button = button;
         const buttonIcon = document.createElement("i");
@@ -1379,7 +1382,7 @@ class ActionListener {
         const currentBottom = currentTop + document.documentElement.clientHeight;
         let index = -1;
         for (let imageWidget of this.webStructure.imageWidgets) {
-            if (imageWidget.pos < currentBottom && imageWidget.isLoadStart) {
+            if (imageWidget.pos < currentBottom && (imageWidget.isLoadStart || imageWidget.button)) {
                 index += 1
             } else {
                 break
